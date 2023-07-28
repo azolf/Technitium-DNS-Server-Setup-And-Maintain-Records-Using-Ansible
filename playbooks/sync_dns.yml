@@ -1,0 +1,8 @@
+---
+- name: sync dns records
+  hosts: dns
+  tasks:
+    - name: sync dns
+      include_role:
+        name: technitium
+        tasks_from: sync
