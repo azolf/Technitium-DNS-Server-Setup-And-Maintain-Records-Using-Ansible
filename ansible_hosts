@@ -1,0 +1,5 @@
+[dns_servers]
+localhost ansible_connection=local
+
+[dns]
+localhost ansible_connection=local

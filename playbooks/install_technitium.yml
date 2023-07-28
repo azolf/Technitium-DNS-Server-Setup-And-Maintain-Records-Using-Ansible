@@ -1,0 +1,6 @@
+---
+- name: dns setup
+  hosts: dns_servers
+  roles:
+    - role: technitium
+      tags: technitium
