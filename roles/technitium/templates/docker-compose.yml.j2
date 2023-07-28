@@ -3,7 +3,7 @@ services:
   dns-server:
     container_name: dns-server
     hostname: dns-server
-    image: technitium/dns-server:latest
+    image: technitium/dns-server:10.0
     ports:
       - "127.0.0.1:5380:5380/tcp" #DNS web console
       - "127.0.0.1:53:53/udp" #DNS service

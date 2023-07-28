@@ -39,7 +39,7 @@
     body_format: json
   register: zones_list_response
 
-- name: get current records in dns
+- name: get current records in each zone
   uri:
     url: "{{ base_address }}/api/getRecords?token={{ dns_configurations.token }}&domain={{ item.name }}"
     method: GET
