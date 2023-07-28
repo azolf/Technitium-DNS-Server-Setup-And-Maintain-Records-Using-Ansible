@@ -1,0 +1,11 @@
+---
+records:
+  - zone: 'example.com'
+    name: '@'
+    ip: '172.16.0.2'
+  - zone: 'example.com'
+    name: 'mail1'
+    ip: '172.16.0.1'
+  - zone: 'sample.com'
+    name: '@'
+    ip: '172.17.0.1'

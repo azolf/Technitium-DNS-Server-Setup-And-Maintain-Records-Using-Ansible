@@ -1,0 +1,74 @@
+---
+- name: Include vars of records.yaml 
+  include_vars:
+    file: records.yml
+
+- name: create zones
+  uri:
+    url: "{{ base_address }}/api/createZone?token={{ dns_configurations.token }}&type=Primary&domain={{ item }}"
+    method: GET
+    return_content: yes
+    status_code: 200
+    body_format: json
+  loop: "{{ records | map(attribute='zone') | unique | list }}"
+
+- name: create dns records
+  uri:
+    url: "{{ base_address }}/api/addRecord?token={{ dns_configurations.token }}&domain={{item.name}}.{{ item.zone }}&type=A&value={{ item.ip }}&ttl=300&overwrite=true"
+    method: GET
+    return_content: yes
+    status_code: 200
+    body_format: json
+  with_items: "{{ records | selectattr('name', '!=', '@') }}"
+
+- name: create dns records for main domain
+  uri:
+    url: "{{ base_address }}/api/addRecord?token={{ dns_configurations.token }}&domain={{ item.zone }}&type=A&value={{ item.ip }}&ttl=300&overwrite=true"
+    method: GET
+    return_content: yes
+    status_code: 200
+    body_format: json
+  with_items: "{{ records | selectattr('name', '==', '@') }}"
+
+- name: get list of zones
+  uri:
+    url: "{{ base_address }}/api/listZones?token={{ dns_configurations.token }}"
+    method: GET
+    return_content: yes
+    status_code: 200
+    body_format: json
+  register: zones_list_response
+
+- name: get current records in dns
+  uri:
+    url: "{{ base_address }}/api/getRecords?token={{ dns_configurations.token }}&domain={{ item.name }}"
+    method: GET
+    return_content: yes
+    status_code: 200
+    body_format: json
+  when: item.type == "Primary" and item.internal == false
+  loop: "{{ zones_list_response.json.response.zones }}"
+  register: list_records_response
+
+- name: register exiting records in dns
+  set_fact: existing_records="{{ existing_records | default([]) | union(item.json.response.records) }}"
+  with_items: "{{ list_records_response.results }}"
+  when: item.skipped|default(false) == false
+  loop_control:
+    label: "adding records for {{ item.json.response.zone.name | default('') }}"
+
+- name: register existing records in config
+  set_fact: config_existing_records="{{ config_existing_records | default([]) | union([item.name ~ '.' ~ item.zone]) }}"
+  with_items: "{{ records | selectattr('name', '!=', '@') }}"
+
+- name: register existing main records in config
+  set_fact: config_existing_records="{{ config_existing_records | default([]) | union([item.zone]) }}"
+  with_items: "{{ records | selectattr('name', '==', '@') }}"
+
+
+- name: delete not existing records in config from dns
+  uri:
+    url: "{{ base_address }}/api/deleteRecord?token={{ dns_configurations.token }}&domain={{ item.name }}&value={{ item.rData.value }}&type=A"
+    method: GET
+  when: item.type == 'A' and item.name not in config_existing_records
+  with_items: "{{ existing_records }}"
