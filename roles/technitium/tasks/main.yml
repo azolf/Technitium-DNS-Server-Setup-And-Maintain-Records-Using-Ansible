@@ -16,8 +16,6 @@
     configurations: "{{ dns_configurations }}"
 
 - name: start container using docker-compose
-  ansible.builtin.docker_compose:
-    project_src: "{{ install_directory }}"
-    state: present
-    restarted: yes 
-
+  command: docker compose up -d --force-recreate
+  args:
+    chdir: "{{ install_directory }}"

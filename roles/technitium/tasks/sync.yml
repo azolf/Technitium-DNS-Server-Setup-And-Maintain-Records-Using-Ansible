@@ -5,7 +5,7 @@
 
 - name: create zones
   uri:
-    url: "{{ base_address }}/api/createZone?token={{ dns_configurations.token }}&type=Primary&domain={{ item }}"
+    url: "{{ base_address }}/api/zones/create?token={{ dns_configurations.token }}&type=Primary&domain={{ item }}"
     method: GET
     return_content: yes
     status_code: 200
@@ -14,7 +14,7 @@
 
 - name: create dns records
   uri:
-    url: "{{ base_address }}/api/addRecord?token={{ dns_configurations.token }}&domain={{item.name}}.{{ item.zone }}&type=A&value={{ item.ip }}&ttl=300&overwrite=true"
+    url: "{{ base_address }}/api/zones/records/add?token={{ dns_configurations.token }}&domain={{item.name}}.{{ item.zone }}&type=A&value={{ item.ip }}&ttl=300&overwrite=true"
     method: GET
     return_content: yes
     status_code: 200
@@ -23,7 +23,7 @@
 
 - name: create dns records for main domain
   uri:
-    url: "{{ base_address }}/api/addRecord?token={{ dns_configurations.token }}&domain={{ item.zone }}&type=A&value={{ item.ip }}&ttl=300&overwrite=true"
+    url: "{{ base_address }}/api/zones/records/add?token={{ dns_configurations.token }}&domain={{ item.zone }}&type=A&value={{ item.ip }}&ttl=300&overwrite=true"
     method: GET
     return_content: yes
     status_code: 200
@@ -32,7 +32,7 @@
 
 - name: get list of zones
   uri:
-    url: "{{ base_address }}/api/listZones?token={{ dns_configurations.token }}"
+    url: "{{ base_address }}/api/zones/list?token={{ dns_configurations.token }}"
     method: GET
     return_content: yes
     status_code: 200
@@ -41,7 +41,7 @@
 
 - name: get current records in each zone
   uri:
-    url: "{{ base_address }}/api/getRecords?token={{ dns_configurations.token }}&domain={{ item.name }}"
+    url: "{{ base_address }}/api/zones/records/get?token={{ dns_configurations.token }}&domain={{ item.name }}&listZone=true"
     method: GET
     return_content: yes
     status_code: 200
@@ -65,10 +65,9 @@
   set_fact: config_existing_records="{{ config_existing_records | default([]) | union([item.zone]) }}"
   with_items: "{{ records | selectattr('name', '==', '@') }}"
 
-
 - name: delete not existing records in config from dns
   uri:
-    url: "{{ base_address }}/api/deleteRecord?token={{ dns_configurations.token }}&domain={{ item.name }}&value={{ item.rData.value }}&type=A"
+    url: "{{ base_address }}/api/zones/records/delete?token={{ dns_configurations.token }}&domain={{ item.name }}&value={{ item.rData.ipAddress }}&type=A"
     method: GET
   when: item.type == 'A' and item.name not in config_existing_records
   with_items: "{{ existing_records }}"
